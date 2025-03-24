@@ -84,5 +84,5 @@ jobs:
             --platform managed \
             --region ${{ secrets.GCP_REGION }} \
             --format 'value(status.url)')
-          echo "Your Cloud Run service is deployed at: $URL"
-          echo "Set your Telegram webhook to $URL/telegram/webhook"
+          echo "Setting Telegram webhook to $URL/telegram/webhook"
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/setWebhook?url=${URL}/telegram/webhook"
