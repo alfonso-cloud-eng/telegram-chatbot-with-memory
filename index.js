@@ -18,15 +18,15 @@ if (fs.existsSync('.env')) {
 // Initialize Firebase Admin SDK for Firestore
 const admin = require('firebase-admin');
 // Check if the service account key exists in the current directory.
-if (fs.existsSync('./serviceAccountKey.json')) {
-  const serviceAccount = require('./serviceAccountKey.json');
+if (fs.existsSync(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY)) {
+  const serviceAccount = require(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY);
   console.log("Using Firebase project:", serviceAccount.project_id);
   // Initialize the app using the service account credentials.
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
 } else {
-  console.error("Service account key not found. Please add serviceAccountKey.json to your project.");
+  console.error("Service account key not found.");
   process.exit(1);
 }
 // Get a Firestore database instance.
@@ -45,53 +45,44 @@ const openai = new OpenAIApi(configuration);
 
 /**
  * Helper function: getConversation
- * Retrieves the conversation history for a given Telegram chat ID from Firestore.
+ * Retrieves the conversation history for a given custom document ID from Firestore.
  * If the document doesn't exist, returns a default conversation with a system message.
  */
-async function getConversation(chatId) {
+async function getConversation(docId) {
   try {
-    const docRef = db.collection('conversations').doc(String(chatId));
+    const docRef = db.collection('conversations').doc(docId);
     const doc = await docRef.get();
     if (doc.exists) {
       // Return stored messages if found.
       return doc.data().messages;
     } else {
-      // No conversation found; start with a default system prompt.
-      return [{ role: 'system', content: 'You are a helpful assistant.' }];
+      // No conversation found; start with a default system prompt from the .env file.
+      return [{ role: 'system', content: process.env.SYSTEM_PROMPT || 'You are a helpful assistant.' }];
     }
   } catch (error) {
     console.error("Error in getConversation:", error);
-    // In case of error, fall back to a default conversation.
-    return [{ role: 'system', content: 'You are a helpful assistant.' }];
+    // In case of error, fall back to the .env system prompt.
+    return [{ role: 'system', content: process.env.SYSTEM_PROMPT || 'You are a helpful assistant.' }];
   }
 }
 
 /**
  * Helper function: saveConversation
- * Saves the updated conversation history for a given chat ID back to Firestore.
+ * Saves the updated conversation history for a given custom document ID back to Firestore.
  */
-async function saveConversation(chatId, messages) {
-  try {
-    const docRef = db.collection('conversations').doc(String(chatId));
-    await docRef.set({ messages });
-  } catch (error) {
-    console.error("Error in saveConversation:", error);
-  }
+async function saveConversation(docId, messages) {
+  const docRef = db.collection('conversations').doc(docId);
+  await docRef.set({ messages });
 }
 
-/**
- * Helper function: sendMessageToTelegram
- * Sends a message to a specific Telegram chat using the Telegram Bot API.
- */
+// Function to send messages back to Telegram
 async function sendMessageToTelegram(chatId, text) {
   const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-  // Construct the Telegram API endpoint URL using the bot token.
   const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
   try {
     await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // The body includes the chat ID and the text message to send.
       body: JSON.stringify({
         chat_id: chatId,
         text: text,
@@ -102,43 +93,71 @@ async function sendMessageToTelegram(chatId, text) {
   }
 }
 
-/**
- * Telegram Webhook Endpoint
- * This endpoint receives updates (messages) from Telegram.
- */
+// Telegram webhook endpoint to receive messages
 app.post('/telegram/webhook', async (req, res) => {
   try {
     const update = req.body;
-    // Check if the update contains a message
     if (update.message) {
-      const chatId = update.message.chat.id;         // Unique identifier for the Telegram chat/user
-      const userMessage = update.message.text;          // The text of the incoming message
+      const chat = update.message.chat;
+      const chatId = chat.id;
+      const userMessage = update.message.text;
+      
+      // If the user sends "/start", reply with a default welcome message and do not process further.
+      if (userMessage.trim() === '/start') {
+        const welcomeMessage = `Welcome! I am your personal professional Cloud Engineer assistant. How can I help you with GCP today?
 
-      // Retrieve the conversation history from Firestore for this chat.
-      const messages = await getConversation(chatId);
+(I speak all languages.)
 
-      // Append the new user message to the conversation history.
+For example, you can ask:
+• "How do I configure a Cloud Storage bucket with versioning enabled?"
+• "What is the command to deploy an application on Cloud Run?"
+• "How do I set up a VPC for secure connections?"
+• "I'm getting an error when using Compute Engine—what could be wrong?"
+• "Which permissions should I assign to a service account for accessing BigQuery?"
+`
+
+        await sendMessageToTelegram(chatId, welcomeMessage);
+        return res.sendStatus(200);
+      }
+      
+      // Create a custom document ID that includes the username (if available) and chatId.
+      let docId = String(chatId);
+      if (chat.username) {
+        docId = `@${chat.username}-${chatId}`;
+      }
+
+      // Retrieve the conversation history from Firestore using the custom document ID
+      let messages = await getConversation(docId);
+      
+      // Retrieve the system prompt from the .env file (with a fallback default)
+      const systemPrompt = process.env.SYSTEM_PROMPT || 'You are a helpful assistant.';
+      const systemMessage = { role: 'system', content: systemPrompt };
+      // Ensure the conversation starts with the updated system message
+      if (messages.length === 0 || messages[0].role !== 'system') {
+        messages.unshift(systemMessage);
+      } else {
+        messages[0] = systemMessage;
+      }
+      
+      // Append the new user message
       messages.push({ role: 'user', content: userMessage });
-
-      // Call OpenAI's Chat Completion API using the full conversation history.
+      
+      // Call OpenAI with the conversation history (including system prompt)
       const completion = await openai.createChatCompletion({
-        model: 'gpt-4o-mini', // Replace with your model name if necessary (e.g., gpt-3.5-turbo)
+        model: 'gpt-4o-mini', // or use 'gpt-4' if available
         messages: messages,
       });
-
-      // Extract the assistant's reply from the API response.
       const assistantReply = completion.data.choices[0].message.content;
-
-      // Append the assistant's reply to the conversation history.
+      
+      // Append the assistant's reply to the conversation history
       messages.push({ role: 'assistant', content: assistantReply });
-
-      // Save the updated conversation history back to Firestore.
-      await saveConversation(chatId, messages);
-
-      // Send the assistant's reply back to the user via Telegram.
+      
+      // Save the updated conversation back to Firestore using the custom document ID
+      await saveConversation(docId, messages);
+      
+      // Send the reply back to the user on Telegram
       await sendMessageToTelegram(chatId, assistantReply);
     }
-    // Always respond with status 200 to Telegram.
     res.sendStatus(200);
   } catch (error) {
     console.error('Error handling Telegram webhook:', error);
@@ -146,13 +165,13 @@ app.post('/telegram/webhook', async (req, res) => {
   }
 });
 
-// A simple health check endpoint
+// Simple route to test server health
 app.get('/', (req, res) => {
   res.send('Telegram bot with Firestore is up and running!');
 });
 
-// Start the Express server on the specified PORT.
-const PORT = process.env.PORT || 3000;
+// Start the server
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
