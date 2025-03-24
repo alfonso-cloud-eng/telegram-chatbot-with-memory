@@ -95,7 +95,7 @@ app.post('/telegram/webhook', async (req, res) => {
       const userMessage = update.message.text;
       
       // If the user sends "/start", reply with a default welcome message and do not process further.
-      const welcomeMessage = fs.readFileSync('welcome.txt', 'utf8');
+      const welcomeMessage = fs.readFileSync('welcome_message.txt', 'utf8');
       if (userMessage.trim() === '/start') {
         await sendMessageToTelegram(chatId, welcomeMessage);
         return res.sendStatus(200);
