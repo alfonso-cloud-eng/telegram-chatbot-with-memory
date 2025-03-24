@@ -52,7 +52,7 @@ jobs:
       - name: Enable Cloud Run API
         run: |
             gcloud services enable run.googleapis.com --project ${{ secrets.GCP_PROJECT_ID }}
-            
+
       #################################################
       # 4) DEPLOY TO CLOUD RUN
       #################################################
@@ -85,4 +85,3 @@ jobs:
             --format 'value(status.url)')
           echo "Your Cloud Run service is deployed at: $URL"
           echo "Set your Telegram webhook to $URL/telegram/webhook"
-
