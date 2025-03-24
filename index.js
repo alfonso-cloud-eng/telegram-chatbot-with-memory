@@ -17,20 +17,25 @@ if (fs.existsSync('.env')) {
 
 // Initialize Firebase Admin SDK for Firestore
 const admin = require('firebase-admin');
-// Check if the service account key exists in the current directory.
-if (fs.existsSync(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY)) {
-  const serviceAccount = require(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY);
-  console.log("Using Firebase project:", serviceAccount.project_id);
-  // Initialize the app using the service account credentials.
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+
+if (process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY) {
+  try {
+    const serviceAccount = JSON.parse(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY);
+    console.log("Using Firebase project:", serviceAccount.project_id);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+  } catch (error) {
+    console.error("Error parsing TELEGRAM_BOT_FIRESTORE_SA_KEY:", error);
+    process.exit(1);
+  }
 } else {
-  console.error("Service account key not found.");
-  process.exit(1);
+  console.warn("TELEGRAM_BOT_FIRESTORE_SA_KEY not provided. Using default credentials.");
+  admin.initializeApp();
 }
-// Get a Firestore database instance.
+
 const db = admin.firestore();
+
 
 // Initialize the Express app and add middleware.
 const app = express();

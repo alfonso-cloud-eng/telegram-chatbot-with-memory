@@ -70,7 +70,7 @@ jobs:
             --platform managed \
             --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
-            --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+            --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},TELEGRAM_BOT_FIRESTORE_SA_KEY=${{ secrets.TELEGRAM_BOT_FIRESTORE_SA_KEY }} \
             --project ${{ secrets.GCP_PROJECT_ID }}
 
       #################################################
