@@ -18,21 +18,24 @@ if (fs.existsSync('.env')) {
 // Initialize Firebase Admin SDK for Firestore
 const admin = require('firebase-admin');
 
-if (process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY) {
+// If the base64 secret is present, decode it.
+if (process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64) {
   try {
-    const serviceAccount = JSON.parse(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY);
+    const decoded = Buffer.from(process.env.TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64, 'base64').toString('utf8');
+    const serviceAccount = JSON.parse(decoded);
     console.log("Using Firebase project:", serviceAccount.project_id);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
   } catch (error) {
-    console.error("Error parsing TELEGRAM_BOT_FIRESTORE_SA_KEY:", error);
+    console.error("Error parsing TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64:", error);
     process.exit(1);
   }
 } else {
-  console.warn("TELEGRAM_BOT_FIRESTORE_SA_KEY not provided. Using default credentials.");
+  console.warn("TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64 not provided. Using default credentials.");
   admin.initializeApp();
 }
+
 
 const db = admin.firestore();
 
