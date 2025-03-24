@@ -67,6 +67,7 @@ jobs:
           # Deploy:
           gcloud run deploy "$SERVICE_NAME" \
             --image "$IMAGE" \
+            --port 8080 \
             --platform managed \
             --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
