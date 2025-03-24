@@ -65,7 +65,7 @@ jobs:
           gcloud run deploy "$SERVICE_NAME" \
             --image "$IMAGE" \
             --platform managed \
-            --region ${{ secrets.GCP_REGION }} \  # or your preferred region
+            --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
             --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             --project ${{ secrets.GCP_PROJECT_ID }}
