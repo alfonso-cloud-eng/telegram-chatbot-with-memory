@@ -72,7 +72,7 @@ jobs:
             --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
             --project ${{ secrets.GCP_PROJECT_ID }} \
-            --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64=${{ secrets.TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64 }}
+            --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
       #################################################
       # 5) SHOW RESULT
