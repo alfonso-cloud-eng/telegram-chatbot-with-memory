@@ -13,7 +13,7 @@ RUN npm install
 # Copy the rest of your code
 COPY . .
 
-# Expose the app port (3000 by default)
+# Expose the app port
 EXPOSE 8080
 
 # Start the app
