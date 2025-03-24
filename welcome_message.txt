@@ -1,0 +1,10 @@
+Welcome! I am your personal professional Cloud Engineer assistant. How can I help you with GCP today?
+
+(I speak all languages.)
+
+For example, you can ask:
+• "How do I configure a Cloud Storage bucket with versioning enabled?"
+• "What is the command to deploy an application on Cloud Run?"
+• "How do I set up a VPC for secure connections?"
+• "I'm getting an error when using Compute Engine—what could be wrong?"
+• "Which permissions should I assign to a service account for accessing BigQuery?"

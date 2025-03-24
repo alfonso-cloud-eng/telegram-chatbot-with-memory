@@ -95,22 +95,12 @@ app.post('/telegram/webhook', async (req, res) => {
       const userMessage = update.message.text;
       
       // If the user sends "/start", reply with a default welcome message and do not process further.
+      const welcomeMessage = fs.readFileSync('welcome.txt', 'utf8');
       if (userMessage.trim() === '/start') {
-        const welcomeMessage = `Welcome! I am your personal professional Cloud Engineer assistant. How can I help you with GCP today?
-
-(I speak all languages.)
-
-For example, you can ask:
-• "How do I configure a Cloud Storage bucket with versioning enabled?"
-• "What is the command to deploy an application on Cloud Run?"
-• "How do I set up a VPC for secure connections?"
-• "I'm getting an error when using Compute Engine—what could be wrong?"
-• "Which permissions should I assign to a service account for accessing BigQuery?"
-`
-
         await sendMessageToTelegram(chatId, welcomeMessage);
         return res.sendStatus(200);
       }
+      
       
       // Create a custom document ID that includes the username (if available) and chatId.
       let docId = String(chatId);
@@ -163,7 +153,7 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
