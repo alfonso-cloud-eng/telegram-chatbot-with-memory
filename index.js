@@ -36,6 +36,19 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 /**
+ * Helper function to read the system prompt from system_prompt.txt.
+ * If the file cannot be read, it falls back to a default prompt.
+ */
+function getSystemPrompt() {
+  try {
+    return fs.readFileSync('system_prompt.txt', 'utf8').trim();
+  } catch (err) {
+    console.error("Error reading system_prompt.txt:", err);
+    return 'You are a helpful assistant.';
+  }
+}
+
+/**
  * Helper function: getConversation
  * Retrieves the conversation history for a given custom document ID from Firestore.
  * If the document doesn't exist, returns a default conversation with a system message.
@@ -48,13 +61,13 @@ async function getConversation(docId) {
       // Return stored messages if found.
       return doc.data().messages;
     } else {
-      // No conversation found; start with a default system prompt from the .env file.
-      return [{ role: 'system', content: process.env.SYSTEM_PROMPT || 'You are a helpful assistant.' }];
+      // No conversation found; start with a default system prompt from system_prompt.txt.
+      return [{ role: 'system', content: getSystemPrompt() }];
     }
   } catch (error) {
     console.error("Error in getConversation:", error);
-    // In case of error, fall back to the .env system prompt.
-    return [{ role: 'system', content: process.env.SYSTEM_PROMPT || 'You are a helpful assistant.' }];
+    // In case of error, fall back to the system prompt from system_prompt.txt.
+    return [{ role: 'system', content: getSystemPrompt() }];
   }
 }
 
@@ -101,7 +114,6 @@ app.post('/telegram/webhook', async (req, res) => {
         return res.sendStatus(200);
       }
       
-      
       // Create a custom document ID that includes the username (if available) and chatId.
       let docId = String(chatId);
       if (chat.username) {
@@ -111,8 +123,8 @@ app.post('/telegram/webhook', async (req, res) => {
       // Retrieve the conversation history from Firestore using the custom document ID
       let messages = await getConversation(docId);
       
-      // Retrieve the system prompt from the .env file (with a fallback default)
-      const systemPrompt = process.env.SYSTEM_PROMPT || 'You are a helpful assistant.';
+      // Retrieve the system prompt from system_prompt.txt (with fallback default)
+      const systemPrompt = getSystemPrompt();
       const systemMessage = { role: 'system', content: systemPrompt };
       // Ensure the conversation starts with the updated system message
       if (messages.length === 0 || messages[0].role !== 'system') {
