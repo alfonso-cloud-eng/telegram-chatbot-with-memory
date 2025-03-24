@@ -48,8 +48,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          # Removed install_components: cloud-run because it's unnecessary
 
+      - name: Enable Cloud Run API
+        run: |
+            gcloud services enable run.googleapis.com --project ${{ secrets.GCP_PROJECT_ID }}
+            
       #################################################
       # 4) DEPLOY TO CLOUD RUN
       #################################################
