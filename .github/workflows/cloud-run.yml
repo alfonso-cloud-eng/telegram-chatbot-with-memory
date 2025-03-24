@@ -56,14 +56,6 @@ jobs:
       #################################################
       # 4) DEPLOY TO CLOUD RUN
       #################################################
-      
-      - name: Encode Service Account Key
-        id: encode_sa_key
-        run: |
-          # Encode the plain JSON key stored in TELEGRAM_BOT_FIRESTORE_SA_KEY and output as a single line.
-          ENCODED_KEY=$(echo -n "${{ secrets.TELEGRAM_BOT_FIRESTORE_SA_KEY }}" | base64 -w 0)
-          echo "encoded_sa_key=${ENCODED_KEY}" >> $GITHUB_OUTPUT
-      
       - name: Deploy to Cloud Run
         run: |
           # Name of your Cloud Run service:
@@ -79,7 +71,7 @@ jobs:
             --platform managed \
             --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
-            --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64=${{ steps.encode_sa_key.outputs.encoded_sa_key }} \
+            --set-env-vars TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64=${{ secrets.TELEGRAM_BOT_FIRESTORE_SA_KEY_BASE64 }} \
             --project ${{ secrets.GCP_PROJECT_ID }}
 
       #################################################
