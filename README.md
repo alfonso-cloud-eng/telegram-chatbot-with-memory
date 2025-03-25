@@ -51,6 +51,8 @@ By default, it behaves like a **“professional cloud engineering assistant”**
 
 ## CI/CD with GitHub Actions & Cloud Run
 
+![Architecture Diagram](./images/architecture-diagram-2.png)
+
 This repository includes a GitHub Actions workflow that automates **continuous deployment** to Cloud Run:
 
 1. **Docker Build & Push**  
